@@ -1,0 +1,88 @@
+---
+title: "Lab 3: COVID-19"
+subtitle: 'Ecosystem Science and Sustainability 330'
+author: 
+  - name: "Cecily Sperber"
+    email: "csperber@colostate.edu"
+format: html
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)  
+library(flextable)  
+library(zoo) 
+
+covid_data <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
+
+```
+
+```{r}
+# Question 1
+# answer: Having easy access to historical and real-time environmnetal data shapes our understanding of climate trends, resource management, and public health by giving the public and scientists/researches the ability to analyze and study trends and patterns as well as create predictions for the future. When this data disappears or becomes inaccessible, it could create challenges for the public and scientists/researchers to understand what is happening in the real world.
+```
+
+```{r}
+# Question 2
+library(tidyverse)  
+library(flextable)
+library(zoo)
+
+covid_data <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
+
+my.date <- as.Date("2022-01-01")  
+my.state <- "Colorado"  
+
+colorado_data <- covid_data %>%
+  dplyr::filter(state == my.state) %>%  
+  dplyr::arrange(county, date)
+
+colorado_data <- colorado_data %>%
+  dplyr::group_by(county) %>%
+  dplyr::mutate(new_cases = cases - dplyr::lag(cases, default = first(cases)),
+                new_deaths = deaths - dplyr::lag(deaths, default = first(deaths))) %>%
+  dplyr::ungroup()
+
+latest_data <- colorado_data %>%
+  dplyr::filter(date == my.date)  
+
+top_cumulative_cases <- latest_data %>%
+  arrange(desc(cases)) %>%
+  select(county, cases) %>%
+  slice_head(n = 5)
+
+top_cumulative_cases %>%
+  flextable() %>%
+  set_caption("Top 5 Counties with the Most Cumulative Cases in Colorado")
+
+top_new_cases <- latest_data %>%
+  arrange(desc(new_cases)) %>%
+  select(county, new_cases) %>%
+  slice_head(n = 5)
+
+top_new_cases_table <- top_new_cases %>%
+  flextable() %>%
+  set_caption("Top 5 Counties with the Most New Cases in Colorado")
+top_new_cases_table
+
+safe_counties <- latest_data %>%
+  filter(new_cases < 10) %>%
+  select(county)
+
+num_safe_counties <- nrow(safe_counties)
+
+safe_counties %>%
+  flextable() %>%
+  set_caption("Counties with Low Case Counts in Colorado")
+
+total_new_cases <- sum(latest_data$new_cases, na.rm = TRUE)
+total_cumulative_cases <- sum(latest_data$cases, na.rm = TRUE)
+
+# answer: A text report describing the total new cases, total cumulative cases, and number of safe counties
+
+```
+
+```{r}
+# Question 3
+
+
+```
