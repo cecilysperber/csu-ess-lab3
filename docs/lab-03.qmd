@@ -23,12 +23,6 @@ covid_data <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/
 
 ```{r}
 # Question 2
-library(tidyverse)  
-library(flextable)
-library(zoo)
-
-covid_data <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
-
 my.date <- as.Date("2022-01-01")  
 my.state <- "Colorado"  
 
@@ -46,23 +40,20 @@ latest_data <- colorado_data %>%
   dplyr::filter(date == my.date)  
 
 top_cumulative_cases <- latest_data %>%
-  arrange(desc(cases)) %>%
-  select(county, cases) %>%
-  slice_head(n = 5)
-
-top_cumulative_cases %>%
+  filter(date == my.date) %>%
+  slice_max(cases, n = 5) %>%
+  select(Date = date, County = county, Cases = cases) %>%
   flextable() %>%
-  set_caption("Top 5 Counties with the Most Cumulative Cases in Colorado")
+  set_caption("Most Cumulative Cases")
+top_cumulative_cases 
 
 top_new_cases <- latest_data %>%
-  arrange(desc(new_cases)) %>%
-  select(county, new_cases) %>%
-  slice_head(n = 5)
-
-top_new_cases_table <- top_new_cases %>%
+  filter(date == my.date) %>%
+  slice_max(cases, n = 5) %>%
+  select(Date = date, County = county, Cases = new_cases) %>%
   flextable() %>%
-  set_caption("Top 5 Counties with the Most New Cases in Colorado")
-top_new_cases_table
+  set_caption("Most New Cases")
+top_new_cases
 
 safe_counties <- latest_data %>%
   filter(new_cases < 10) %>%
@@ -83,7 +74,6 @@ total_cumulative_cases <- sum(latest_data$cases, na.rm = TRUE)
 
 ```{r}
 # Question 3
-
 population_data <- read_csv("https://www2.census.gov/programs-surveys/popest/datasets/2020-2021/counties/totals/co-est2021-alldata.csv")
 covid_data <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
 
