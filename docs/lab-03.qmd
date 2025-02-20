@@ -132,5 +132,39 @@ flextable(top_cumulative_cases) %>%
 flextable(top_new_cases) %>%
   set_caption("Top 5 Counties by New Cases Per Capita (2021-01-01)")
 
+```
+
+```{r}
+# Question 4
+
+last_14_days <- joined_data %>%
+  filter(date >= as.numeric(max(date)) - 14)
+
+county_summary <- last_14_days %>%
+  group_by(FIPS, CTYNAME) %>%
+  summarize(
+    total_new_cases = sum(new_cases, na.rm = TRUE),
+    population = first(POPESTIMATE2021),  
+    new_cases_per_100k = (total_new_cases / population) * 100000  
+  ) %>%
+  arrange(desc(new_cases_per_100k))
+
+top_5_counties <- county_summary %>%
+  head(5)
+
+watch_list_count <- sum(county_summary$new_cases_per_100k > 100)
+
+flextable(top_5_counties) %>%
+  set_caption("Top 5 Counties by New Cases Per 100,000 (Last 14 Days)")
+
+cat("Number of counties on the watch list: ", watch_list_count)
+
+```
+
+```{r}
+# Question 5
+
+
+
 
 ```
