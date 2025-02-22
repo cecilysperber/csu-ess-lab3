@@ -84,7 +84,7 @@ population_data_clean <- population_data %>%
     FIPS = paste0(STATE, COUNTY)                  
   ) %>%
   filter(COUNTY != "000") %>%
-  select(FIPS, CTYNAME, POPESTIMATE2021)       
+  select(FIPS, CTYNAME, POPESTIMATE2021, DEATHS2021)       
 
 covid_data <- covid_data %>%
   mutate(FIPS = as.character(fips)) 
@@ -107,13 +107,13 @@ joined_data <- joined_data %>%
 top_cumulative_cases <- joined_data %>%
   filter(date == "2021-01-01") %>%
   arrange(desc(per_capita_cumulative_cases)) %>%
-  select(CTYNAME, per_capita_cumulative_cases) %>%
+  select(County = CTYNAME, Cases = per_capita_cumulative_cases) %>%
   head(5)
 
 top_new_cases <- joined_data %>%
   filter(date == "2021-01-01") %>%
   arrange(desc(per_capita_new_cases)) %>%
-  select(CTYNAME, per_capita_new_cases) %>%
+  select(County = CTYNAME, Cases = per_capita_new_cases) %>%
   head(5)
 
 flextable(top_cumulative_cases) %>%
@@ -128,7 +128,7 @@ flextable(top_new_cases) %>%
 # Question 4
 
 last_14_days <- joined_data %>%
-  filter(date >= as.numeric(max(date)) - 14)
+  filter(date >= max(date) - 14)
 
 county_summary <- last_14_days %>%
   group_by(FIPS, CTYNAME) %>%
@@ -153,6 +153,52 @@ cat("Number of counties on the watch list: ", watch_list_count)
 
 ```{r}
 # Question 5
+library(ggplot2)
+library(dplyr)
+library(readr)
+
+population_data <- read_csv("https://www2.census.gov/programs-surveys/popest/datasets/2020-2021/counties/totals/co-est2021-alldata.csv")
+
+population_data_clean <- population_data %>%
+  mutate(
+    STATE = sprintf("%02d", as.numeric(STATE)),   
+    COUNTY = sprintf("%03d", as.numeric(COUNTY)),
+    FIPS = paste0(STATE, COUNTY)                  
+  ) %>%
+  filter(COUNTY != "000") %>%  
+  select(FIPS, CTYNAME, POPESTIMATE2021, DEATHS2021) 
+
+population_data_clean[] <- lapply(population_data_clean, function(x) {
+  if (is.character(x)) iconv(x, from = "latin1", to = "UTF-8") else x
+})
+
+population_data_clean$FIPS <- as.character(population_data_clean$FIPS)
+
+population_data_clean <- population_data_clean %>%
+  mutate(death_percentage = (DEATHS2021 / POPESTIMATE2021) * 100) %>%
+  filter(!is.na(death_percentage)) 
+
+high_death_counties <- population_data_clean %>%
+  filter(death_percentage >= 1) %>%
+  arrange(desc(death_percentage))
+
+top_20_death_percent <- high_death_counties %>%
+  head(20)
+
+ggplot(top_20_death_percent, aes(x = reorder(CTYNAME, death_percentage), y = death_percentage)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +  
+  labs(
+    title = "Top 20 Counties by Death Percentage",
+    x = "County",
+    y = "Death Percentage"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+# Question 6
 
 
 
