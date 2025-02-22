@@ -199,8 +199,77 @@ ggplot(top_20_death_percent, aes(x = reorder(CTYNAME, death_percentage), y = dea
 
 ```{r}
 # Question 6
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(zoo)
+
+census_data <- read_csv("https://www2.census.gov/programs-surveys/popest/datasets/2020-2021/counties/totals/co-est2021-alldata.csv")
+
+state_population <- census_data %>%
+  group_by(STNAME) %>%
+  summarize(STATE_POPULATION = sum(POPESTIMATE2021, na.rm = TRUE)) %>%
+  filter(STNAME %in% c("New York", "Colorado", "Alabama", "Ohio"))
+
+covid_data <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
+
+state_covid_data <- covid_data %>%
+  group_by(date, state) %>%
+  summarize(total_cases = sum(cases, na.rm = TRUE)) %>%
+  filter(state %in% c("New York", "Colorado", "Alabama", "Ohio")) %>%
+  arrange(state, date) %>%
+  mutate(
+    new_cases = total_cases - lag(total_cases, default = 0),  
+    rolling_avg_cases = zoo::rollmean(new_cases, k = 7, fill = NA, align = "right")  
+  )
+
+str(state_covid_data)  
+summary(state_covid_data$new_cases) 
+summary(state_covid_data$rolling_avg_cases)
+
+state_covid_data <- state_covid_data %>%
+  mutate(
+    new_cases = as.numeric(new_cases),
+    rolling_avg_cases = as.numeric(rolling_avg_cases)
+  )
+
+state_covid_data <- state_covid_data %>%
+  filter(!is.na(new_cases))
+
+state_covid_data$new_cases[is.na(state_covid_data$new_cases)] <- 0
+state_covid_data$rolling_avg_cases[is.na(state_covid_data$rolling_avg_cases)] <- 0
+
+ggplot(state_covid_data, aes(x = date, y = new_cases)) +
+  geom_bar(stat = "identity", fill = "lightblue") +
+  geom_line(aes(y = rolling_avg_cases, color = "7-Day Avg"), size = 1.2) +
+  facet_wrap(~state, scales = "free_y") +  
+  scale_y_continuous(labels = scales::comma) +  # Ensure numeric y-axis formatting
+  labs(
+    title = "Daily New COVID-19 Cases & 7-Day Rolling Average",
+    x = "Date",
+    y = "New Cases",
+    color = "Legend"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top")
 
 
+covid_per_capita <- state_covid_data %>%
+  left_join(state_population, by = c("state" = "STNAME")) %>%
+  mutate(
+    cases_per_capita = (new_cases / STATE_POPULATION) * 100000,
+    rolling_avg_per_capita = zoo::rollmean(cases_per_capita, k = 7, fill = NA, align = "right")
+  )
 
+ggplot(covid_per_capita, aes(x = date, y = rolling_avg_per_capita, color = state)) +
+  geom_line(size = 1.2) +
+  labs(
+    title = "COVID-19 Cases Per Capita (7-Day Rolling Average)",
+    x = "Date",
+    y = "Cases per 100,000 People",
+    color = "State"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top")
 
 ```
