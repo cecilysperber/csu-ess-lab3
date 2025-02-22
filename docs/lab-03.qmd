@@ -223,10 +223,6 @@ state_covid_data <- covid_data %>%
     rolling_avg_cases = zoo::rollmean(new_cases, k = 7, fill = NA, align = "right")  
   )
 
-str(state_covid_data)  
-summary(state_covid_data$new_cases) 
-summary(state_covid_data$rolling_avg_cases)
-
 state_covid_data <- state_covid_data %>%
   mutate(
     new_cases = as.numeric(new_cases),
@@ -262,7 +258,7 @@ covid_per_capita <- state_covid_data %>%
   )
 
 ggplot(covid_per_capita, aes(x = date, y = rolling_avg_per_capita, color = state)) +
-  geom_line(size = 1.2) +
+  geom_line(linewidth = 1.2) +
   labs(
     title = "COVID-19 Cases Per Capita",
     x = "Date",
@@ -293,28 +289,82 @@ county_centroids <- county_centroids %>% mutate(fips = as.character(fips))
 covid_with_location <- covid_data %>%
   left_join(county_centroids, by = "fips")
 
-weighted_mean_center <- covid_with_location %>%
+
+
+
+# answer: In a few sentences, describe the movement of the COVID-19 weighted mean throughout the USA and possible drivers of its movement given your knowledge of the outbreak hot spots.
+
+```
+
+```{r}
+# Question 8
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(ggmap)
+library(patchwork)
+
+weighted_mean_center_cases <- covid_with_location %>%
   group_by(date) %>%
   summarize(
     total_cases = sum(cases, na.rm = TRUE),
-    WMC_LON = sum(LON * cases, na.rm = TRUE) / sum(cases, na.rm = TRUE),
-    WMC_LAT = sum(LAT * cases, na.rm = TRUE) / sum(cases, na.rm = TRUE),
-    month = format(date, "%m")  # Extract month
+    WMC_LON_cases = sum(LON * cases, na.rm = TRUE) / sum(cases, na.rm = TRUE),
+    WMC_LAT_cases = sum(LAT * cases, na.rm = TRUE) / sum(cases, na.rm = TRUE)
   )
 
-ggplot() +
-  borders("state", fill = "gray90", colour = "white") +  # USA map
-  geom_point(data = weighted_mean_center, aes(x = WMC_LON, y = WMC_LAT, color = month, size = total_cases), alpha = 0.7) +
-  scale_color_viridis_d() +  # Better color scheme
+weighted_mean_center_deaths <- covid_with_location %>%
+  group_by(date) %>%
+  summarize(
+    total_deaths = sum(deaths, na.rm = TRUE),
+    WMC_LON_deaths = sum(LON * deaths, na.rm = TRUE) / sum(deaths, na.rm = TRUE),
+    WMC_LAT_deaths = sum(LAT * deaths, na.rm = TRUE) / sum(deaths, na.rm = TRUE)
+  )
+
+plot_cases <- ggplot() +
+  borders("state", fill = "gray90", colour = "white") +  
+  geom_point(data = weighted_mean_center_cases, 
+             aes(x = WMC_LON_cases, y = WMC_LAT_cases, color = "red", size = total_cases), 
+             alpha = 0.7) +
+  scale_color_manual(values = "red") + 
   theme_minimal() +
   labs(
-    title = "Movement of COVID-19 Weighted Mean Center in the USA",
+    title = "Covid Weighted Mean Center for Cases",
     x = "Longitude",
     y = "Latitude",
-    color = "Month",
+    color = "Cases",
     size = "Total Cases"
   )
 
-# answer: In a few sentences, describe the movement of the COVID-19 weighted mean throughout the USA and possible drivers of its movement given your knowledge of the outbreak hot spots.
+weighted_mean_center_cases <- weighted_mean_center_cases %>%
+  filter(!is.na(WMC_LON_cases) & !is.na(WMC_LAT_cases))
+
+weighted_mean_center_deaths <- weighted_mean_center_deaths %>%
+  filter(!is.na(WMC_LON_deaths) & !is.na(WMC_LAT_deaths))
+
+weighted_mean_center_cases <- weighted_mean_center_cases %>%
+  filter(WMC_LON_cases >= -180 & WMC_LON_cases <= 180,
+         WMC_LAT_cases >= -90 & WMC_LAT_cases <= 90)
+
+weighted_mean_center_deaths <- weighted_mean_center_deaths %>%
+  filter(WMC_LON_deaths >= -180 & WMC_LON_deaths <= 180,
+         WMC_LAT_deaths >= -90 & WMC_LAT_deaths <= 90)
+
+plot_deaths <- ggplot() +
+  borders("state", fill = "gray90", colour = "white") +  
+  geom_point(data = weighted_mean_center_deaths, 
+             aes(x = WMC_LON_deaths, y = WMC_LAT_deaths, color = "navy", size = total_deaths), 
+             alpha = 0.7) +
+  scale_color_manual(values = "navy") + 
+  theme_minimal() +
+  labs(
+    title = "Covid Weighted Mean Center for Deaths",
+    x = "Longitude",
+    y = "Latitude",
+    color = "Deaths",
+    size = "Total Deaths"
+  )
+
+combined_plot <- plot_cases + plot_deaths + plot_layout(ncol = 2)
+print(combined_plot)
 
 ```
