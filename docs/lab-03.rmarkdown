@@ -4,7 +4,9 @@ subtitle: 'Ecosystem Science and Sustainability 330'
 author: 
   - name: "Cecily Sperber"
     email: "csperber@colostate.edu"
-format: html
+format:
+  html:
+    df-print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -23,52 +25,52 @@ covid_data <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/
 
 ```{r}
 # Question 2
-my.date <- as.Date("2022-01-01")  
+my.date <- as.Date("2022-02-01")  
 my.state <- "Colorado"  
 
 colorado_data <- covid_data %>%
-  dplyr::filter(state == my.state) %>%  
-  dplyr::arrange(county, date)
+    filter(state == my.state) %>%
+    arrange(county, date) %>%
+    group_by(county) %>%
+    mutate(new_cases = cases - lag(cases, default = first(cases)),
+           new_deaths = deaths - lag(deaths, default = first(deaths))) %>%
+    ungroup()
 
-colorado_data <- colorado_data %>%
-  dplyr::group_by(county) %>%
-  dplyr::mutate(new_cases = cases - dplyr::lag(cases, default = first(cases)),
-                new_deaths = deaths - dplyr::lag(deaths, default = first(deaths))) %>%
-  dplyr::ungroup()
-
-latest_data <- colorado_data %>%
-  dplyr::filter(date == my.date)  
+latest_data <- colorado_data %>% 
+    filter(date == my.date)
 
 top_cumulative_cases <- latest_data %>%
-  filter(date == my.date) %>%
-  slice_max(cases, n = 5) %>%
-  select(Date = date, County = county, Cases = cases) %>%
-  flextable() %>%
-  set_caption("Most Cumulative Cases")
-top_cumulative_cases 
+    slice_max(cases, n = 5) %>%
+    select(Date = date, County = county, `Total Cases` = cases) %>%
+    flextable() %>%
+    set_caption("The Top 5 Countires with the Most Cumulative Cases")
+top_cumulative_cases
 
 top_new_cases <- latest_data %>%
-  filter(date == my.date) %>%
-  slice_max(cases, n = 5) %>%
-  select(Date = date, County = county, Cases = new_cases) %>%
-  flextable() %>%
-  set_caption("Most New Cases")
+    slice_max(new_cases, n = 5) %>%
+    select(Date = date, County = county, `New Cases` = new_cases) %>%
+    flextable() %>%
+    set_caption("The Top 5 Counties with the Most New Cases")
 top_new_cases
 
+latest_date <- max(latest_data$date, na.rm = TRUE)
+latest_data <- latest_data %>% filter(date == latest_date)
+
 safe_counties <- latest_data %>%
-  filter(new_cases < 10) %>%
-  select(county)
+    filter(new_cases < 10) %>%
+    select(County = county)
 
 num_safe_counties <- nrow(safe_counties)
 
-safe_counties %>%
-  flextable() %>%
-  set_caption("Counties with Low Case Counts in Colorado")
+safe_counties_table <- safe_counties %>%
+    flextable() %>%
+    set_caption("The Top 5 Counties with Low Case Counts in Colorado")
+safe_counties_table
 
 total_new_cases <- sum(latest_data$new_cases, na.rm = TRUE)
 total_cumulative_cases <- sum(latest_data$cases, na.rm = TRUE)
 
-# answer: A text report describing the total new cases, total cumulative cases, and number of safe counties
+# answer: The top counties with the highest total cumulative cases include El Paso, Denver, Arapahoe, Adams, and Jefferson. The top counties with the highest total new cases include El Paso, Arapahoe, Denver, Adams, and Jefferson. The number of safe counties from this data is 34. 
 
 ```
 
@@ -105,22 +107,22 @@ joined_data <- joined_data %>%
   ungroup()
 
 top_cumulative_cases <- joined_data %>%
-  filter(date == "2021-01-01") %>%
+  filter(date == "2021-02-01") %>%
   arrange(desc(per_capita_cumulative_cases)) %>%
   select(County = CTYNAME, Cases = per_capita_cumulative_cases) %>%
   head(5)
 
 top_new_cases <- joined_data %>%
-  filter(date == "2021-01-01") %>%
+  filter(date == "2021-02-01") %>%
   arrange(desc(per_capita_new_cases)) %>%
   select(County = CTYNAME, Cases = per_capita_new_cases) %>%
   head(5)
 
 flextable(top_cumulative_cases) %>%
-  set_caption("Top 5 Counties by Cumulative Cases Per Capita (2021-01-01)")
+  set_caption("The Top 5 Counties by Cumulative Cases Per Capita")
 
 flextable(top_new_cases) %>%
-  set_caption("Top 5 Counties by New Cases Per Capita (2021-01-01)")
+  set_caption("The Top 5 Counties by New Cases Per Capita")
 
 ```
 
@@ -142,7 +144,7 @@ county_summary <- last_14_days %>%
 top_5_counties <- county_summary %>%
   head(5)
 
-watch_list_count <- sum(county_summary$new_cases_per_100k > 100)
+watch_list_count <- sum(county_summary$new_cases_per_100k > 100, na.rm = TRUE)
 
 flextable(top_5_counties) %>%
   set_caption("Top 5 Counties by New Cases Per 100,000 (Last 14 Days)")
