@@ -4,9 +4,7 @@ subtitle: 'Ecosystem Science and Sustainability 330'
 author: 
   - name: "Cecily Sperber"
     email: "csperber@colostate.edu"
-format:
-  html:
-    df-print: paged
+format: html
 ---
 
 ```{r setup, include=FALSE}
@@ -36,22 +34,21 @@ colorado_data <- covid_data %>%
            new_deaths = deaths - lag(deaths, default = first(deaths))) %>%
     ungroup()
 
-latest_data <- colorado_data %>% 
+latest_data <- colorado_data %>%
     filter(date == my.date)
 
 top_cumulative_cases <- latest_data %>%
     slice_max(cases, n = 5) %>%
     select(Date = date, County = county, `Total Cases` = cases) %>%
     flextable() %>%
-    set_caption("The Top 5 Countires with the Most Cumulative Cases")
-top_cumulative_cases
+    set_caption(caption = "The Top 5 Countires with the Most Cumulative Cases")
+
 
 top_new_cases <- latest_data %>%
     slice_max(new_cases, n = 5) %>%
     select(Date = date, County = county, `New Cases` = new_cases) %>%
     flextable() %>%
-    set_caption("The Top 5 Counties with the Most New Cases")
-top_new_cases
+    set_caption(caption = "The Top 5 Counties with the Most New Cases")
 
 latest_date <- max(latest_data$date, na.rm = TRUE)
 latest_data <- latest_data %>% filter(date == latest_date)
@@ -64,8 +61,8 @@ num_safe_counties <- nrow(safe_counties)
 
 safe_counties_table <- safe_counties %>%
     flextable() %>%
-    set_caption("The Top 5 Counties with Low Case Counts in Colorado")
-safe_counties_table
+    set_caption(caption = "The Top 5 Counties with Low Case Counts in Colorado")
+
 
 total_new_cases <- sum(latest_data$new_cases, na.rm = TRUE)
 total_cumulative_cases <- sum(latest_data$cases, na.rm = TRUE)
@@ -107,22 +104,22 @@ joined_data <- joined_data %>%
   ungroup()
 
 top_cumulative_cases <- joined_data %>%
-  filter(date == "2021-02-01") %>%
+  filter(date == "2022-02-01") %>%
   arrange(desc(per_capita_cumulative_cases)) %>%
   select(County = CTYNAME, Cases = per_capita_cumulative_cases) %>%
   head(5)
 
 top_new_cases <- joined_data %>%
-  filter(date == "2021-02-01") %>%
+  filter(date == "2022-02-01") %>%
   arrange(desc(per_capita_new_cases)) %>%
   select(County = CTYNAME, Cases = per_capita_new_cases) %>%
   head(5)
 
 flextable(top_cumulative_cases) %>%
-  set_caption("The Top 5 Counties by Cumulative Cases Per Capita")
+  set_caption(caption = "The Top 5 Counties by Cumulative Cases Per Capita")
 
 flextable(top_new_cases) %>%
-  set_caption("The Top 5 Counties by New Cases Per Capita")
+  set_caption(caption = "The Top 5 Counties by New Cases Per Capita")
 
 ```
 
@@ -133,21 +130,23 @@ last_14_days <- joined_data %>%
   filter(date >= max(date) - 14)
 
 county_summary <- last_14_days %>%
-  group_by(FIPS, CTYNAME) %>%
+  group_by(CTYNAME) %>%
   summarize(
     total_new_cases = sum(new_cases, na.rm = TRUE),
     population = first(POPESTIMATE2021),  
     new_cases_per_100k = (total_new_cases / population) * 100000  
   ) %>%
-  arrange(desc(new_cases_per_100k))
-
-top_5_counties <- county_summary %>%
-  head(5)
+  ungroup()
+  
+top_counties <- county_summary %>%
+    slice_max(new_cases_per_100k, n = 5) %>%
+    select(County = CTYNAME, Cases = new_cases_per_100k)
+    
+top_counties_table <- flextable(top_counties) %>%
+    set_caption(caption = "The Top 5 Counties by New Cases Per 100,000")
+top_counties_table
 
 watch_list_count <- sum(county_summary$new_cases_per_100k > 100, na.rm = TRUE)
-
-flextable(top_5_counties) %>%
-  set_caption("Top 5 Counties by New Cases Per 100,000 (Last 14 Days)")
 
 cat("Number of counties on the watch list: ", watch_list_count)
 
@@ -216,48 +215,25 @@ state_population <- census_data %>%
 covid_data <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
 
 state_covid_data <- covid_data %>%
-  group_by(date, state) %>%
-  summarize(total_cases = sum(cases, na.rm = TRUE)) %>%
   filter(state %in% c("New York", "Colorado", "Alabama", "Ohio")) %>%
-  arrange(state, date) %>%
+  group_by(state, date) %>% 
+  summarize(total_cases = sum(cases, na.rm = TRUE), .groups = "drop") %>%
+  arrange(state, date) %>%  
+  group_by(state) %>%  
   mutate(
-    new_cases = total_cases - lag(total_cases, default = 0),  
-    rolling_avg_cases = zoo::rollmean(new_cases, k = 7, fill = NA, align = "right")  
-  )
-
-state_covid_data <- state_covid_data %>%
-  mutate(
-    new_cases = as.numeric(new_cases),
-    rolling_avg_cases = as.numeric(rolling_avg_cases)
-  )
-
-state_covid_data <- state_covid_data %>%
-  filter(!is.na(new_cases))
-
-state_covid_data$new_cases[is.na(state_covid_data$new_cases)] <- 0
-state_covid_data$rolling_avg_cases[is.na(state_covid_data$rolling_avg_cases)] <- 0
-
-ggplot(state_covid_data, aes(x = date, y = new_cases)) +
-  geom_bar(stat = "identity", fill = "lightblue") +
-  geom_line(aes(y = rolling_avg_cases, color = "7-Day Avg"), linewidth = 1.2) +
-  facet_wrap(~state, scales = "free_y") +  
-  scale_y_continuous(labels = scales::comma) +  # Ensure numeric y-axis formatting
-  labs(
-    title = "Daily New COVID-19 Cases & 7-Day Rolling Average",
-    x = "Date",
-    y = "New Cases",
-    color = "Legend"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "top")
-
+    new_cases = total_cases - lag(total_cases),  
+    new_cases = replace_na(new_cases, 0),  
+    rolling_avg_cases = zoo::rollmean(new_cases, k = 7, fill = NA, align = "right")
+  ) %>%
+  ungroup()
 
 covid_per_capita <- state_covid_data %>%
   left_join(state_population, by = c("state" = "STNAME")) %>%
   mutate(
     cases_per_capita = (new_cases / STATE_POPULATION) * 100000,
     rolling_avg_per_capita = zoo::rollmean(cases_per_capita, k = 7, fill = NA, align = "right")
-  )
+  ) %>%
+  filter(!is.na(rolling_avg_per_capita))  
 
 ggplot(covid_per_capita, aes(x = date, y = rolling_avg_per_capita, color = state)) +
   geom_line(linewidth = 1.2) +
