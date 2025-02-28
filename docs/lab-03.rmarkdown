@@ -15,7 +15,11 @@ library(zoo)
 covid_data <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
 
 ```
+
+
 # Question 1 
+
+
 ```{r}
 # Question 1
 # answer: Having easy access to historical and real-time environmnetal data shapes our understanding of climate trends, resource management, and public health by giving the public and scientists/researches the ability to analyze and study trends and patterns as well as create predictions for the future. When this data disappears or becomes inaccessible, it could create challenges for the public and scientists/researchers to understand what is happening in the real world.
