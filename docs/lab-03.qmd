@@ -16,13 +16,10 @@ covid_data <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/
 
 ```
 # Question 1 
-```{r}
-# Question 1
-# answer: Having easy access to historical and real-time environmnetal data shapes our understanding of climate trends, resource management, and public health by giving the public and scientists/researches the ability to analyze and study trends and patterns as well as create predictions for the future. When this data disappears or becomes inaccessible, it could create challenges for the public and scientists/researchers to understand what is happening in the real world.
-```
+## Answer: Having easy access to historical and real-time environmnetal data shapes our understanding of climate trends, resource management, and public health by giving the public and scientists/researches the ability to analyze and study trends and patterns as well as create predictions for the future. When this data disappears or becomes inaccessible, it could create challenges for the public and scientists/researchers to understand what is happening in the real world.
 
-```{r}
 # Question 2
+```{r}
 my.date <- as.Date("2022-02-01")  
 my.state <- "Colorado"  
 
@@ -67,12 +64,11 @@ safe_counties_table <- safe_counties %>%
 total_new_cases <- sum(latest_data$new_cases, na.rm = TRUE)
 total_cumulative_cases <- sum(latest_data$cases, na.rm = TRUE)
 
-# answer: The top counties with the highest total cumulative cases include El Paso, Denver, Arapahoe, Adams, and Jefferson. The top counties with the highest total new cases include El Paso, Arapahoe, Denver, Adams, and Jefferson. The number of safe counties from this data is 34. 
-
 ```
+## Answer: The top counties with the highest total cumulative cases include El Paso, Denver, Arapahoe, Adams, and Jefferson. The top counties with the highest total new cases include El Paso, Arapahoe, Denver, Adams, and Jefferson. The number of safe counties from this data is 34. 
 
-```{r}
 # Question 3
+```{r}
 population_data <- read_csv("https://www2.census.gov/programs-surveys/popest/datasets/2020-2021/counties/totals/co-est2021-alldata.csv")
 covid_data <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
 
@@ -122,10 +118,8 @@ flextable(top_new_cases) %>%
   set_caption(caption = "The Top 5 Counties by New Cases Per Capita")
 
 ```
-
-```{r}
 # Question 4
-
+```{r}
 last_14_days <- joined_data %>%
   filter(date >= max(date) - 14)
 
@@ -151,9 +145,8 @@ watch_list_count <- sum(county_summary$new_cases_per_100k > 100, na.rm = TRUE)
 cat("Number of counties on the watch list: ", watch_list_count)
 
 ```
-
-```{r}
 # Question 5
+```{r}
 library(ggplot2)
 library(dplyr)
 library(readr)
@@ -197,9 +190,8 @@ ggplot(top_20_death_percent, aes(x = reorder(CTYNAME, death_percentage), y = dea
   theme_minimal()
 
 ```
-
-```{r}
 # Question 6
+```{r}
 library(ggplot2)
 library(dplyr)
 library(readr)
@@ -243,7 +235,7 @@ ggplot(state_covid_data, aes(x = date, y = new_cases)) +
   geom_bar(stat = "identity", fill = "lightblue") +
   geom_line(aes(y = rolling_avg_cases, color = "7-Day Avg"), linewidth = 1.2) +
   facet_wrap(~state, scales = "free_y") +  
-  scale_y_continuous(labels = scales::comma) +  # Ensure numeric y-axis formatting
+  scale_y_continuous(labels = scales::comma) + 
   labs(
     title = "Daily New COVID-19 Cases & 7-Day Rolling Average",
     x = "Date",
@@ -269,17 +261,16 @@ ggplot(covid_per_capita, aes(x = date, y = rolling_avg_per_capita, color = state
     title = "COVID-19 Cases Per Capita",
     x = "Date",
     y = "Cases per 100,000 People",
-    color = "State"
+    color = "State: "
   ) +
   theme_minimal() +
   theme(legend.position = "top")
 
-# answer: Briefly describe the influence scaling by population had on the analysis? Does it make some states look better? Some worse? How so?
-
 ```
+## Answer: Scaling by population gives more context to compare the severity by state. When looking at one state, you have no reference point to analyze it. 
 
-```{r}
 # Question 7
+```{r}
 library(tidyverse)
 library(lubridate)
 library(ggplot2)
@@ -350,13 +341,11 @@ ggplot() +
     plot.margin = margin(10, 10, 10, 10)      
   )
 
-
-# answer: In a few sentences, describe the movement of the COVID-19 weighted mean throughout the USA and possible drivers of its movement given your knowledge of the outbreak hot spots.
-
 ```
+## Answer: In a few sentences, describe the movement of the COVID-19 weighted mean throughout the USA and possible drivers of its movement given your knowledge of the outbreak hot spots.
 
-```{r}
 # Question 8
+```{r}
 library(tidyverse)
 library(lubridate)
 library(ggplot2)
@@ -442,8 +431,5 @@ plot_deaths <- ggplot() +
 combined_plot <- plot_cases + plot_deaths + plot_layout(ncol = 2)
 print(combined_plot)
 
-
-
-# answer: Once completed describe the differences in the plots and what they mean about the spatial patterns seen with COVID impacts
-
 ```
+## Answer: Once completed describe the differences in the plots and what they mean about the spatial patterns seen with COVID impacts
