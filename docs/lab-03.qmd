@@ -39,13 +39,14 @@ top_cumulative_cases <- latest_data %>%
     select(Date = date, County = county, `Total Cases` = cases) %>%
     flextable() %>%
     set_caption(caption = "The Top 5 Countires with the Most Cumulative Cases")
-
+top_cumulative_cases
 
 top_new_cases <- latest_data %>%
     slice_max(new_cases, n = 5) %>%
     select(Date = date, County = county, `New Cases` = new_cases) %>%
     flextable() %>%
     set_caption(caption = "The Top 5 Counties with the Most New Cases")
+top_new_cases
 
 latest_date <- max(latest_data$date, na.rm = TRUE)
 latest_data <- latest_data %>% filter(date == latest_date)
@@ -59,6 +60,7 @@ num_safe_counties <- nrow(safe_counties)
 safe_counties_table <- safe_counties %>%
     flextable() %>%
     set_caption(caption = "The Top 5 Counties with Low Case Counts in Colorado")
+safe_counties_table 
 
 
 total_new_cases <- sum(latest_data$new_cases, na.rm = TRUE)
@@ -267,7 +269,7 @@ ggplot(covid_per_capita, aes(x = date, y = rolling_avg_per_capita, color = state
   theme(legend.position = "top")
 
 ```
-## Answer: Scaling by population gives more context to compare the severity by state. When looking at one state, you have no reference point to analyze it. 
+## Answer: Scaling by population gives more context to compare the severity by state. When looking at one state, you have no reference point to analyze it compared to the other states. Alabama and New York look much worse than Colorado and Ohio because they had much more cases per 100,000 people in 2022. 
 
 # Question 7
 ```{r}
@@ -342,7 +344,7 @@ ggplot() +
   )
 
 ```
-## Answer: In a few sentences, describe the movement of the COVID-19 weighted mean throughout the USA and possible drivers of its movement given your knowledge of the outbreak hot spots.
+## Answer: Most of the COVID-19 weighted mean center in the USA occurred between the states Missouri and Arkansas during the later months of the year. There is some small outbreaks around the state of Colorado as well during Janurary through March. The reason there was such a large outbreak in the Missouri and Arkansas was because of a new highly contagious COVID-19 variant (Delta) affecting the nation. 
 
 # Question 8
 ```{r}
@@ -432,4 +434,4 @@ combined_plot <- plot_cases + plot_deaths + plot_layout(ncol = 2)
 print(combined_plot)
 
 ```
-## Answer: Once completed describe the differences in the plots and what they mean about the spatial patterns seen with COVID impacts
+## Answer: The weighted mean center for deaths has a large hotspot around the states Missouri, Kentucky and Indiana. There is also some spread out data from Washington down to the hotspot but is very small and dispersed. The weighted mean center for cases however has a hotspot more around the states Missouri and Arkansas with some small spread out data around the state of Colorado. From this data we can infer there was more COVID-19 impacts on the midwest than the rest of the nation.  
