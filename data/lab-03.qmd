@@ -4,7 +4,11 @@ subtitle: 'Ecosystem Science and Sustainability 330'
 author: 
   - name: "Cecily Sperber"
     email: "csperber@colostate.edu"
-format: html
+format:
+  html:
+    self-contained: true 
+execute:
+  echo:true
 ---
 
 ```{r setup, include=FALSE}
@@ -83,10 +87,10 @@ population_data_clean <- population_data %>%
   filter(COUNTY != "000") %>%
   select(FIPS, CTYNAME, POPESTIMATE2021, DEATHS2021)       
 
-covid_data <- covid_data %>%
+colorado_data <- colorado_data %>%
   mutate(FIPS = as.character(fips)) 
 
-joined_data <- covid_data %>%
+joined_data <- colorado_data %>%
   left_join(population_data_clean, by = "FIPS")
 
 joined_data <- joined_data %>%
@@ -153,39 +157,32 @@ library(ggplot2)
 library(dplyr)
 library(readr)
 
-population_data <- read_csv("https://www2.census.gov/programs-surveys/popest/datasets/2020-2021/counties/totals/co-est2021-alldata.csv")
+covid_deaths <- colorado_data %>%
+  filter(date >= as.Date("2021-01-01") & date <= as.Date("2021-12-31") & state == my.state) %>%
+  group_by(fips, county) %>%
+  summarize(total_covid_deaths = max(deaths, ns.rm = TRUE) -
+min(deaths, nr.rm = TRUE), .groups = "drop")
 
-population_data_clean <- population_data %>%
-  mutate(
-    STATE = sprintf("%02d", as.numeric(STATE)),   
-    COUNTY = sprintf("%03d", as.numeric(COUNTY)),
-    FIPS = paste0(STATE, COUNTY)                  
-  ) %>%
-  filter(COUNTY != "000") %>%  
-  select(FIPS, CTYNAME, POPESTIMATE2021, DEATHS2021) 
+annual_deaths <- population_data_clean %>%
+  select(FIPS, POPESTIMATE2021) %>%
+  rename(fips = FIPS) %>%
+  mutate(annual_deaths = POPESTIMATE2021 * 0.0087)
 
-population_data_clean[] <- lapply(population_data_clean, function(x) {
-  if (is.character(x)) iconv(x, from = "latin1", to = "UTF-8") else x
-})
+covid_deaths <- covid_deaths %>%
+  mutate(fips = toupper(fips))
 
-population_data_clean$FIPS <- as.character(population_data_clean$FIPS)
+death_ratio <- covid_deaths %>%
+  left_join(annual_deaths, by = "fips") %>%
+  mutate(death_ratio = total_covid_deaths / annual_deaths) %>%
+  filter(death_ratio >= 0.2)
 
-population_data_clean <- population_data_clean %>%
-  mutate(death_percentage = (DEATHS2021 / POPESTIMATE2021) * 100) %>%
-  filter(!is.na(death_percentage)) 
+death_ratio$county <- factor(death_ratio$county, levels = death_ratio$county[order(death_ratio$death_ratio, decreasing = TRUE)])
 
-high_death_counties <- population_data_clean %>%
-  filter(death_percentage >= 1) %>%
-  arrange(desc(death_percentage))
-
-top_20_death_percent <- high_death_counties %>%
-  head(20)
-
-ggplot(top_20_death_percent, aes(x = reorder(CTYNAME, death_percentage), y = death_percentage)) +
+ggplot(death_ratio, aes(x = county, y = death_ratio)) +
   geom_bar(stat = "identity", fill = "steelblue") +
   coord_flip() +  
   labs(
-    title = "Top 20 Counties by Death Percentage",
+    title = "Counties with 20% or more Death Percentage",
     x = "County",
     y = "Death Percentage"
   ) +
