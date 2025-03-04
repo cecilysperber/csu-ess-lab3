@@ -8,7 +8,7 @@ format:
   html:
     self-contained: true 
 execute:
-  echo:true
+  echo: true
 ---
 
 ```{r setup, include=FALSE}
@@ -42,14 +42,14 @@ top_cumulative_cases <- latest_data %>%
     slice_max(cases, n = 5) %>%
     select(Date = date, County = county, `Total Cases` = cases) %>%
     flextable() %>%
-    set_caption(caption = "The Top 5 Countires with the Most Cumulative Cases")
+    add_header_lines("The Top 5 Countires with the Most Cumulative Cases")
 top_cumulative_cases
 
 top_new_cases <- latest_data %>%
     slice_max(new_cases, n = 5) %>%
     select(Date = date, County = county, `New Cases` = new_cases) %>%
     flextable() %>%
-    set_caption(caption = "The Top 5 Counties with the Most New Cases")
+    add_header_lines("The Top 5 Counties with the Most New Cases")
 top_new_cases
 
 latest_date <- max(latest_data$date, na.rm = TRUE)
@@ -63,7 +63,7 @@ num_safe_counties <- nrow(safe_counties)
 
 safe_counties_table <- safe_counties %>%
     flextable() %>%
-    set_caption(caption = "The Top 5 Counties with Low Case Counts in Colorado")
+    add_header_lines("The Top 5 Counties with Low Case Counts in Colorado")
 safe_counties_table 
 
 
@@ -118,10 +118,10 @@ top_new_cases <- joined_data %>%
   head(5)
 
 flextable(top_cumulative_cases) %>%
-  set_caption(caption = "The Top 5 Counties by Cumulative Cases Per Capita")
+  add_header_lines("The Top 5 Counties by Cumulative Cases Per Capita")
 
 flextable(top_new_cases) %>%
-  set_caption(caption = "The Top 5 Counties by New Cases Per Capita")
+  add_header_lines("The Top 5 Counties by New Cases Per Capita")
 
 ```
 # Question 4
@@ -143,7 +143,7 @@ top_counties <- county_summary %>%
     select(County = CTYNAME, Cases = new_cases_per_100k)
     
 top_counties_table <- flextable(top_counties) %>%
-    set_caption(caption = "The Top 5 Counties by New Cases Per 100,000")
+    add_header_lines("The Top 5 Counties by New Cases Per 100,000")
 top_counties_table
 
 watch_list_count <- sum(county_summary$new_cases_per_100k > 100, na.rm = TRUE)
@@ -182,7 +182,7 @@ ggplot(death_ratio, aes(x = county, y = death_ratio)) +
   geom_bar(stat = "identity", fill = "steelblue") +
   coord_flip() +  
   labs(
-    title = "Counties with 20% or more Death Percentage",
+    title = "Counties with 20% or More Death Percentage",
     x = "County",
     y = "Death Percentage"
   ) +
